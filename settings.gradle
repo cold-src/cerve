@@ -16,3 +16,7 @@ include 'buildsrc'
 include 'cerve-common'
 
 include 'cerve-server'
+include 'test'
+
+
+include 'test'

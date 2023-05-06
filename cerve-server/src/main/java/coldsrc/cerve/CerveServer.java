@@ -3,6 +3,7 @@ package coldsrc.cerve;
 import coldsrc.cerve.client.ServerClient;
 import coldsrc.cerve.logging.LoggerProvider;
 import coldsrc.cerve.logging.LoggerProxy;
+import coldsrc.cerve.network.NetworkManager;
 import coldsrc.cerve.permission.PermissionNamespace;
 import coldsrc.cerve.security.AsymmetricEncryptionProfile;
 import coldsrc.cerve.security.EncryptionProfile;
@@ -51,6 +52,11 @@ public class CerveServer {
     final List<ServerClient> clients = new ArrayList<>();
 
     /**
+     * The network manager.
+     */
+    final NetworkManager networkManager = new NetworkManager();
+
+    /**
      * The servers encryption profile to initiate safe communication.
      */
     final AsymmetricEncryptionProfile serverEncryption = StandardEncryption.newAsymmetricEncryptionProfile();
@@ -77,6 +83,15 @@ public class CerveServer {
      */
     public int getPort() {
         return port;
+    }
+
+    /**
+     * Get the global network manager.
+     *
+     * @return The network manager.
+     */
+    public NetworkManager getNetworkManager() {
+        return networkManager;
     }
 
     /**

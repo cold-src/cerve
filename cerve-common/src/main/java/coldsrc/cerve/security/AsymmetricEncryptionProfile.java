@@ -23,9 +23,6 @@ public class AsymmetricEncryptionProfile extends EncryptionProfile {
         }
     }
 
-    public static final AsymmetricEncryptionProfile RSA_ECB_1024 =
-            new AsymmetricEncryptionProfile("RSA", "ECB", "PKCS1Padding", "RSA", 1024);
-
     /* -------------------------------------- */
 
     public static final int UNPADDED_BLOCK_SIZE = 117;
