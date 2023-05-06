@@ -3,8 +3,21 @@ package coldsrc.cerve.logging;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 public class LoggerProvider {
+
+    public static LoggerProvider javaLogging(boolean enableDebug) {
+        return new LoggerProvider(s -> new LoggerProxy() {
+            // the java logger instance
+            final Logger logger = Logger.getLogger(s);
+
+            @Override public void debug0(String msg) { logger.info("[DEBUG] " + msg); }
+            @Override public void info(String msg) { logger.info(msg); }
+            @Override public void warn(String msg) { logger.warning(msg); }
+            @Override public void error(String msg) { logger.severe(msg); }
+        }, enableDebug);
+    }
 
     /**
      * Created logger proxies by name.

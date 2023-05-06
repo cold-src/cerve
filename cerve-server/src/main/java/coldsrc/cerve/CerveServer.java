@@ -1,11 +1,15 @@
 package coldsrc.cerve;
 
+import coldsrc.cerve.client.ServerClient;
 import coldsrc.cerve.logging.LoggerProvider;
 import coldsrc.cerve.logging.LoggerProxy;
 import coldsrc.cerve.permission.PermissionNamespace;
 import coldsrc.cerve.service.ServerService;
+import coldsrc.cerve.user.ServerUser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,10 +37,26 @@ public class CerveServer {
      */
     final Map<String, ServerService> serviceMap = new HashMap<>();
 
-    CerveServer(int port, LoggerProvider loggerProvider) {
+    /**
+     * All registered users.
+     */
+    final Map<String, ServerUser> userMap = new HashMap<>();
+
+    /**
+     * All connected clients.
+     */
+    final List<ServerClient> clients = new ArrayList<>();
+
+    public CerveServer(int port, LoggerProvider loggerProvider) {
         this.port = port;
         this.loggerProvider = loggerProvider;
+
+        // loggers //
+        this.clientLogger = loggerProvider.getLogger("ServerClient");
     }
+
+    /* Loggers */
+    public final LoggerProxy clientLogger;
 
     /**
      * Get the network port for the server to accept on.
@@ -99,7 +119,7 @@ public class CerveServer {
      * @return The new instance.
      */
     public ServerService createService(String name) {
-        ServerService service = new ServerService(name);
+        ServerService service = new ServerService(this, name);
         serviceMap.put(name, service);
         return service;
     }
@@ -109,6 +129,53 @@ public class CerveServer {
         if (service != null)
             return service;
         return createService(name);
+    }
+
+    /**
+     * Get a user by name if present.
+     *
+     * @param name The user name.
+     * @return The user or null if absent.
+     */
+    public ServerUser getUser(String name) {
+        return userMap.get(name);
+    }
+
+    /**
+     * Check if a user is registered.
+     *
+     * @param name The user name.
+     * @return If a user by the given name exists.
+     */
+    public boolean hasUser(String name) {
+        return userMap.containsKey(name);
+    }
+
+    /**
+     * Create a new user with the given name.
+     *
+     * @param name The user name.
+     * @return The new user instance.
+     */
+    public ServerUser createUser(String name) {
+        ServerUser user = new ServerUser(this, name);
+        userMap.put(name, user);
+        return user;
+    }
+
+    /**
+     * Get the list of connected clients.
+     *
+     * @return The clients.
+     */
+    public List<ServerClient> getClients() {
+        return clients;
+    }
+
+    public void removeClient(ServerClient client) {
+        synchronized (clients) {
+            clients.remove(client);
+        }
     }
 
 }

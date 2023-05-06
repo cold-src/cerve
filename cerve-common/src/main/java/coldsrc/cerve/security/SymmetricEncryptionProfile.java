@@ -6,7 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 
-public class SymmetricEncryptionProfile extends EncryptionProfile<SymmetricEncryptionProfile> {
+public class SymmetricEncryptionProfile extends EncryptionProfile {
 
     public static KeyGenerator getKeyGeneratorSafe(String name) {
         try {

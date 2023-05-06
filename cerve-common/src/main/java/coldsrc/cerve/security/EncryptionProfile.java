@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.function.Supplier;
 
 /**
  * General utility encryption handler, replacement
@@ -14,7 +15,18 @@ import java.util.Base64;
  * horribly coded.
  */
 @SuppressWarnings("rawtypes")
-public abstract class EncryptionProfile<S extends EncryptionProfile> {
+public abstract class EncryptionProfile {
+
+    public static EncryptionProfile NOT_ENCRYPTING = new EncryptionProfile(null, 0, 0) {
+        @Override public EncryptionProfile generateKeys(int len) { return this; }
+        @Override public Key getEncryptionKey() { return null; }
+        @Override public Key getDecryptionKey() { return null; }
+        @Override public EncryptionProfile withKey(String name, Key key) { return null; }
+        @Override public <K extends Key> K decodeKey(Class<K> kClass, byte[] bytes) { return null; }
+
+        @Override public byte[] encrypt(byte[] bytes) { return bytes; }
+        @Override public byte[] decrypt(byte[] bytes) { return bytes; }
+    };
 
     public static Cipher getCipherSafe(String name) {
         try {
@@ -44,9 +56,6 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
     }
 
     /* -------------------------------- */
-
-    @SuppressWarnings("unchecked")
-    private final S self = (S) this;
 
     // implementation properties
     protected final int unpaddedBlockSize;
@@ -99,7 +108,7 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
         Configuration
      */
 
-    public S withCipher(Cipher cipher) {
+    public EncryptionProfile withCipher(Cipher cipher) {
         // set properties
         this.algorithm = cipher.getAlgorithm();
 
@@ -107,10 +116,10 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
         this.cipher = cipher;
 
         // return
-        return self;
+        return this;
     }
 
-    public S withCipher(String algorithm, String mode, String padding) {
+    public EncryptionProfile withCipher(String algorithm, String mode, String padding) {
         // set properties basic
         this.algorithm = algorithm;
         this.mode      = mode;
@@ -123,18 +132,18 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
         }
 
         // return
-        return self;
+        return this;
     }
 
     /*
         Keys
      */
 
-    public abstract S generateKeys(int len);
+    public abstract EncryptionProfile generateKeys(int len);
     public abstract Key getEncryptionKey();
     public abstract Key getDecryptionKey();
 
-    public abstract S withKey(String name, Key key);
+    public abstract EncryptionProfile withKey(String name, Key key);
     public abstract <K extends Key> K decodeKey(Class<K> kClass, byte[] bytes);
     public byte[] encodeKey(Key key) {
         return (key != null ? key.getEncoded() : null); // kinda obvious
@@ -212,6 +221,17 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
             this.stream = stream;
         }
 
+        Supplier<Boolean> encryptCheck;
+
+        public Supplier<Boolean> getEncryptCheck() {
+            return encryptCheck;
+        }
+
+        public EncryptingOutputStream setEncryptCheck(Supplier<Boolean> encryptCheck) {
+            this.encryptCheck = encryptCheck;
+            return this;
+        }
+
         // the encrypted data buffer
         byte[] buf = new byte[blockSize];
         // the index in the buffer to read to
@@ -237,9 +257,13 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
 
         @Override
         public void flush() throws IOException {
-            // encrypt and write buffer
-            byte[] encrypted = encrypt(buf);
-            stream.write(encrypted);
+            if (encryptCheck == null || encryptCheck.get()) {
+                // encrypt and write buffer
+                byte[] encrypted = encrypt(buf);
+                stream.write(encrypted);
+            } else {
+                stream.write(buf);
+            }
         }
 
         public DataOutputStream toDataStream() {
@@ -270,6 +294,17 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
         // the amount of indices read from the buffer
         int used = 0;
 
+        Supplier<Boolean> encryptCheck;
+
+        public Supplier<Boolean> getEncryptCheck() {
+            return encryptCheck;
+        }
+
+        public DecryptingInputStream setEncryptCheck(Supplier<Boolean> encryptCheck) {
+            this.encryptCheck = encryptCheck;
+            return this;
+        }
+
         @Override
         public int read() throws IOException {
             // decrypt next block if used
@@ -277,7 +312,8 @@ public abstract class EncryptionProfile<S extends EncryptionProfile> {
                 // read next encrypted block
                 byte[] encrypted = stream.readNBytes(blockSize);
                 // decrypt and put in buffer
-                buf = decrypt(encrypted);
+                if (encryptCheck == null || encryptCheck.get()) buf = decrypt(encrypted);
+                else buf = encrypted;
             }
 
             // read decrypted byte

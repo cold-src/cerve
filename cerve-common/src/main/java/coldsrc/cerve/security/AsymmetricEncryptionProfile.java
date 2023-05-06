@@ -5,7 +5,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Objects;
 
-public class AsymmetricEncryptionProfile extends EncryptionProfile<AsymmetricEncryptionProfile> {
+public class AsymmetricEncryptionProfile extends EncryptionProfile {
 
     public static KeyFactory getKeyFactorySafe(String name) {
         try {
