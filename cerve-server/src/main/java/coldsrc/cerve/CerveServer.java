@@ -4,6 +4,9 @@ import coldsrc.cerve.client.ServerClient;
 import coldsrc.cerve.logging.LoggerProvider;
 import coldsrc.cerve.logging.LoggerProxy;
 import coldsrc.cerve.permission.PermissionNamespace;
+import coldsrc.cerve.security.AsymmetricEncryptionProfile;
+import coldsrc.cerve.security.EncryptionProfile;
+import coldsrc.cerve.security.StandardEncryption;
 import coldsrc.cerve.service.ServerService;
 import coldsrc.cerve.user.ServerUser;
 
@@ -47,12 +50,21 @@ public class CerveServer {
      */
     final List<ServerClient> clients = new ArrayList<>();
 
+    /**
+     * The servers encryption profile to initiate safe communication.
+     */
+    final AsymmetricEncryptionProfile serverEncryption = StandardEncryption.newAsymmetricEncryptionProfile();
+
     public CerveServer(int port, LoggerProvider loggerProvider) {
         this.port = port;
         this.loggerProvider = loggerProvider;
 
         // loggers //
         this.clientLogger = loggerProvider.getLogger("ServerClient");
+
+        // generate public and private key
+        // for the handshakes
+        serverEncryption.generateKeys();
     }
 
     /* Loggers */
@@ -65,6 +77,15 @@ public class CerveServer {
      */
     public int getPort() {
         return port;
+    }
+
+    /**
+     * Get the server encryption profile.
+     *
+     * @return The servers encryption profile to initiate safe communication.
+     */
+    public AsymmetricEncryptionProfile getServerEncryption() {
+        return serverEncryption;
     }
 
     /**

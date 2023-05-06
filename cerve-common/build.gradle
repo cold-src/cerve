@@ -21,3 +21,7 @@ ext {
 
 /* apply buildsrc script */ 
 apply from: '../buildsrc/module.gradle', to: project
+
+dependencies {
+    api 'net.orbyfied.coldlib:coldlib-common-util:1.0.4'
+}
